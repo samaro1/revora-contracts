@@ -1,27 +1,19 @@
 # Build artifacts
 /target
-target/
 *.rlib
 *.rmeta
 *.so
 
-# Cargo lock (library crate)
-Cargo.lock
-
 # Test snapshots (auto-generated)
 test_snapshots/
 
-# IDE / editor
+# IDE and editor
 .vscode/
 .idea/
-
 *.swp
 *.swo
 *~
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
-
-# Soroban
-.soroban/
