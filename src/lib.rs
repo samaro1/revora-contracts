@@ -44,6 +44,12 @@ const EVENT_SHARE_SET: Symbol = symbol_short!("share_set");
 const EVENT_FREEZE: Symbol = symbol_short!("freeze");
 const EVENT_CLAIM_DELAY_SET: Symbol = symbol_short!("delay_set");
 
+// ── Event schema versions ─────────────────────────────────────
+const EVENT_OFFER_REG_VERSION: Symbol = symbol_short!("offer_v1");
+const EVENT_REVENUE_REP_VERSION: Symbol = symbol_short!("rev_v1");
+const EVENT_OFFER_REG_VERSION_NUM: u32 = 1u32;
+const EVENT_REVENUE_REP_VERSION_NUM: u32 = 1u32;
+
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Offering {
@@ -184,6 +190,48 @@ impl RevoraRevenueShare {
         env.storage().persistent().set(&item_key, &offering);
         env.storage().persistent().set(&count_key, &(count + 1));
 
+        // Emit versioned offering registration event so off-chain consumers
+        // can evolve schema safely.
+        env.events().publish(
+            (symbol_short!("offer_reg"), issuer.clone(), EVENT_OFFER_REG_VERSION),
+            (token, revenue_share_bps, EVENT_OFFER_REG_VERSION_NUM),
+        );
+        Ok(())
+    }
+
+    /// Return current offering event schema version (numeric).
+    pub fn offering_event_version(_env: Env) -> u32 {
+        EVENT_OFFER_REG_VERSION_NUM
+    }
+
+    /// Return current revenue report event schema version (numeric).
+    pub fn revenue_event_version(_env: Env) -> u32 {
+        EVENT_REVENUE_REP_VERSION_NUM
+    }
+        env: Env,
+        issuer: Address,
+        token: Address,
+        revenue_share_bps: u32,
+    ) -> Result<(), RevoraError> {
+        issuer.require_auth();
+
+        if revenue_share_bps > 10_000 {
+            return Err(RevoraError::InvalidRevenueShareBps);
+        }
+
+        let count_key = DataKey::OfferCount(issuer.clone());
+        let count: u32 = env.storage().persistent().get(&count_key).unwrap_or(0);
+
+        let offering = Offering {
+            issuer: issuer.clone(),
+            token: token.clone(),
+            revenue_share_bps,
+        };
+
+        let item_key = DataKey::OfferItem(issuer.clone(), count);
+        env.storage().persistent().set(&item_key, &offering);
+        env.storage().persistent().set(&count_key, &(count + 1));
+
         env.events().publish(
             (symbol_short!("offer_reg"), issuer),
             (token, revenue_share_bps),
@@ -245,8 +293,13 @@ impl RevoraRevenueShare {
         let blacklist = Self::get_blacklist(env.clone(), token.clone());
 
         env.events().publish(
-            (EVENT_REVENUE_REPORTED, issuer.clone(), token.clone()),
-            (amount, period_id, blacklist),
+            (
+                EVENT_REVENUE_REPORTED,
+                issuer.clone(),
+                token.clone(),
+                EVENT_REVENUE_REP_VERSION,
+            ),
+            (amount, period_id, blacklist, EVENT_REVENUE_REP_VERSION_NUM),
         );
 
         // Audit log summary (#34): maintain per-offering total revenue and report count

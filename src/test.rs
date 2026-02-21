@@ -1,6 +1,6 @@
 #![cfg(test)]
 use soroban_sdk::{
-    testutils::Address as _, testutils::Events as _, testutils::Ledger as _, token, Address, Env,
+    testutils::Address as _, testutils::Events as _, token, Address, Env,
     Vec,
 };
 
@@ -28,7 +28,6 @@ fn it_emits_events_on_register_and_report() {
 
     assert!(env.events().all().len() >= 2);
 }
-
 // ---------------------------------------------------------------------------
 // Pagination tests
 // ---------------------------------------------------------------------------
@@ -207,6 +206,20 @@ fn exact_page_boundary_no_cursor() {
     let (p2, c2) = client.get_offerings_page(&issuer, &c1.unwrap(), &3);
     assert_eq!(p2.len(), 3);
     assert_eq!(c2, None);
+}
+
+// ── versioning checks ────────────────────────────────────────
+#[test]
+fn version_getters_reflect_current_version() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let client = make_client(&env);
+
+    let offer_v = client.offering_event_version();
+    let rev_v = client.revenue_event_version();
+
+    assert_eq!(offer_v, 1u32);
+    assert_eq!(rev_v, 1u32);
 }
 
 // ── blacklist CRUD ────────────────────────────────────────────
