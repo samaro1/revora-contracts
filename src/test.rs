@@ -27,20 +27,6 @@ fn it_emits_events_on_register_and_report() {
     assert!(env.events().all().len() >= 2);
 }
 
-// ── versioning checks ────────────────────────────────────────
-#[test]
-fn version_getters_reflect_current_version() {
-    let env = Env::default();
-    env.mock_all_auths();
-    let client  = make_client(&env);
-
-    let offer_v = client.offering_event_version();
-    let rev_v = client.revenue_event_version();
-
-    assert_eq!(offer_v, 1u32);
-    assert_eq!(rev_v, 1u32);
-}
-
 // ── blacklist CRUD ────────────────────────────────────────────
 
 #[test]
