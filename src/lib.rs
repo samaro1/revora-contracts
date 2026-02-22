@@ -208,36 +208,7 @@ impl RevoraRevenueShare {
     pub fn revenue_event_version(_env: Env) -> u32 {
         EVENT_REVENUE_REP_VERSION_NUM
     }
-        env: Env,
-        issuer: Address,
-        token: Address,
-        revenue_share_bps: u32,
-    ) -> Result<(), RevoraError> {
-        issuer.require_auth();
-
-        if revenue_share_bps > 10_000 {
-            return Err(RevoraError::InvalidRevenueShareBps);
-        }
-
-        let count_key = DataKey::OfferCount(issuer.clone());
-        let count: u32 = env.storage().persistent().get(&count_key).unwrap_or(0);
-
-        let offering = Offering {
-            issuer: issuer.clone(),
-            token: token.clone(),
-            revenue_share_bps,
-        };
-
-        let item_key = DataKey::OfferItem(issuer.clone(), count);
-        env.storage().persistent().set(&item_key, &offering);
-        env.storage().persistent().set(&count_key, &(count + 1));
-
-        env.events().publish(
-            (symbol_short!("offer_reg"), issuer),
-            (token, revenue_share_bps),
-        );
-        Ok(())
-    }
+    
 
     /// Fetch a single offering by issuer and token (scans issuer's offerings).
     pub fn get_offering(env: Env, issuer: Address, token: Address) -> Option<Offering> {
