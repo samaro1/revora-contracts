@@ -80,7 +80,11 @@ impl RevoraRevenueShare {
         // Emit versioned offering registration event so off-chain consumers
         // can evolve schema safely.
         env.events().publish(
-            (symbol_short!("offer_reg"), issuer.clone(), EVENT_OFFER_REG_VERSION),
+            (
+                symbol_short!("offer_reg"),
+                issuer.clone(),
+                EVENT_OFFER_REG_VERSION,
+            ),
             (token, revenue_share_bps, EVENT_OFFER_REG_VERSION_NUM),
         );
         Ok(())
@@ -95,7 +99,6 @@ impl RevoraRevenueShare {
     pub fn revenue_event_version(_env: Env) -> u32 {
         EVENT_REVENUE_REP_VERSION_NUM
     }
-    
 
     /// Fetch a single offering by issuer and token (scans issuer's offerings).
     pub fn get_offering(env: Env, issuer: Address, token: Address) -> Option<Offering> {
